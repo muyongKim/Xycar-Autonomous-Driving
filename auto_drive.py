@@ -223,13 +223,13 @@ def process_image(frame):
 
 def light_detection_3(frame):
     global limit
-    frame = frame[150:230, 180:480]
+    frame = frame[150:220, 210:450]
     cv2.imshow('frame', frame)
     frame2 = frame.copy()
     frame2 = cv2.GaussianBlur(frame2, (9, 9), 0)
     imgray = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
 
-    circles = cv2.HoughCircles(imgray, cv2.HOUGH_GRADIENT, 1, 10, param1=60, param2=25, minRadius=11, maxRadius=60)
+    circles = cv2.HoughCircles(imgray, cv2.HOUGH_GRADIENT, 1, 10, param1=60, param2=25, minRadius=12, maxRadius=60)
 
     if circles is not None:
         circles = np.uint16(np.around(circles))
@@ -246,38 +246,6 @@ def light_detection_3(frame):
                 print('COLOR VALUE : ', imgray[lightY[2], lightX[2]])
                 if imgray[lightY[2], lightX[2]] > 230:  # light on
                     return True
-                return False
-    return True
-
-def light_detection_4(frame):
-    global limit, mission
-    frame = frame[180:250, 200:460]
-
-    frame2 = frame.copy()
-    frame2 = cv2.GaussianBlur(frame2, (9, 9), 0)
-    imgray = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
-
-    circles = cv2.HoughCircles(imgray, cv2.HOUGH_GRADIENT, 1, 10, param1=60, param2=25, minRadius=10, maxRadius=40)
-
-    if circles is not None:
-        circles = np.uint16(np.around(circles))
-
-        for circle in circles[0, :]:
-            cv2.circle(frame, (circle[0], circle[1]), circle[2], (255, 0, 0), 2)
-            cv2.imshow('frame', frame)
-        if len(circles[0]) == 4:
-            lightX = [circles[0][0][0], circles[0][1][0], circles[0][2][0], circles[0][3][0]]
-            lightY = [circles[0][0][1], circles[0][1][1], circles[0][2][1], circles[0][3][1]]
-            lightX.sort()
-            lightY.sort()
-
-            if (lightX[0] + lightX[3]) == (lightX[1] + lightX[2]):
-                if imgray[lightY[0], lightX[0]] >= 230:  # left light
-                    limit = 5
-                    mission = 5
-                elif imgray[lightY[3], lightX[3]] >= 230:  # right light
-                    limit = 6
-                    mission = 5
                 return False
     return True
 
@@ -323,45 +291,51 @@ def avoid_obstacles():
 
 def avoid_obstaclesB():
     global mission
-    drive_time = time.time() + 2
+    drive_time = time.time() + 3
+    print('1111111111111')
     while True:
-        drive(-7, 3)
-        print('1111111111111')
+        drive(-15, 3)
         if time.time() > drive_time:
             break
     
-    drive_time = time.time() + 2
+    drive_time = time.time() + 4
+    print('222222222222222')
     while True:
-        drive(10, 3)
-        print('222222222222222')
+        drive(25, 3)
         if time.time() > drive_time:
             break
     
-    drive_time = time.time() + 2
+    drive_time = time.time() + 3
+    print('33333333333333')
     while True:
-        drive(-13, 3)
-        print('33333333333333')
+        drive(-10, 3)
         if time.time() > drive_time:
             break
+    print('-----------Change mission 4----------------')
     mission = 4
 
-def entry_rotary():
+def entry_rotary(mission_ = 2, dTime_ = 2.5):
     global mission
-
-    drive_time = time.time() + 2.5
+    rate = rospy.Rate(10)
+    drive_time = time.time() + dTime_
     while True:
-        drive(3, 4)
+        if mission_ == 1:
+            drive(0,5)
+        else:
+            drive(8, 4)
+        rate.sleep()
         if time.time() > drive_time:
             break
     # change mission
-    mission = 2
+    print('--------------Change mission ', mission_, '---------------------')
+    mission = mission_
 
 def turn_left():
     global mission
     
-    drive_time = time.time() + 3
+    drive_time = time.time() + 3.5
     while True:
-        drive(-5, 4)
+        drive(-15, 3)
         if time.time() > drive_time:
             break
     mission = 6
@@ -371,10 +345,48 @@ def turn_right():
     
     drive_time = time.time() + 3
     while True:
-        drive(5, 4)
+        drive(15, 3)
+        if time.time() > drive_time:
+            break
+    drive_time = time.time() + 2.5
+    while True:
+        drive(70, 3)
         if time.time() > drive_time:
             break
     mission = 6
+
+def light_detection_4(frame):
+    global limit, mission
+    frame = frame[180:250, 210:450]
+
+    frame2 = frame.copy()
+    frame2 = cv2.GaussianBlur(frame2, (9, 9), 0)
+    imgray = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
+
+    circles = cv2.HoughCircles(imgray, cv2.HOUGH_GRADIENT, 1, 10, param1=60, param2=25, minRadius=10, maxRadius=40)
+
+    if circles is not None:
+        circles = np.uint16(np.around(circles))
+
+        for circle in circles[0, :]:
+            cv2.circle(frame, (circle[0], circle[1]), circle[2], (255, 0, 0), 2)
+            cv2.imshow('frame', frame)
+        if len(circles[0]) == 4:
+            lightX = [circles[0][0][0], circles[0][1][0], circles[0][2][0], circles[0][3][0]]
+            lightY = [circles[0][0][1], circles[0][1][1], circles[0][2][1], circles[0][3][1]]
+            lightX.sort()
+            lightY.sort()
+
+            if (lightX[0] + lightX[3]) == (lightX[1] + lightX[2]):
+                if imgray[lightY[0], lightX[0]] >= 220:  # left light
+                    turn_left()
+                    print('left')
+                elif imgray[lightY[3], lightX[3]] >= 220:  # right light
+                    turn_right()
+                    print('right')
+                return False
+    return True
+
     
 def start():
     global pub
@@ -388,8 +400,7 @@ def start():
     pid_D = 0
     sum_angle = 0
     mission = 0
-    
-
+    cnt = 0
     prev_angle = 0
 
     rospy.init_node('auto_drive')
@@ -402,7 +413,7 @@ def start():
     
     rate = rospy.Rate(10)
     print('START!!!!')
-    mission_start = time.time()
+    mission_start = 0
     while True:
         while not image.size == (640 * 480 * 3):
             continue
@@ -418,53 +429,61 @@ def start():
         # PID Control
         # prev_angle = angle
         # drive(angle, 12)
-        print('---------------------------Mission', mission)
 
         if mission == 0:
-            if time.time() - mission_start >= 20:
-                drive(0, 0)
-                rospy.sleep(2)
-                mission = 1
             if not light_detection_3(image):
-                drive(0, 0)  # detect stop line, not green light
-                rospy.sleep(2)
-                mission_start -= 2
+                drive(0, 0)  # detect light, not green light
+                rospy.sleep(4.5)
+                print('----------Light detected and sleep----------------')
+                entry_rotary(1, 1.5)
             else:
                 drive(c, 6)
         elif mission == 1:
+            if 2.2 <= (time.time() - mission_start) <= 2.5:
+                rospy.sleep(4)
+                mission_start = 0
             if detect_stoplineB(image):
-                print('--------Ready for entry-----------')
+                print('--------Stopline detected and sleep-----------')
                 drive(0, 0)
-                rospy.sleep(2)
-                entry_rotary()
+                rospy.sleep(4.5)
+                cnt += 1
+                if cnt == 1:
+                    entry_rotary(1, 1)
+                    mission_start = time.time()
+                elif cnt == 2:
+                    entry_rotary(2, 1.5)
             else:
                 drive(c, 6)
         elif mission == 2:
             if detect_stoplineB(image):
+                print('-----------Change mission 3----------------')
                 mission = 3
             else:
-                print('-----------Rotary----------------')
+                print('-----------In Rotary----------------')
                 drive(c, 4)
         elif mission == 3:
+            drive(c, 3)
             avoid_obstaclesB()
         elif mission == 4:
-            if not light_detection_4(image) or detect_stoplineB(image):
+            if not light_detection_4(image):
                 drive(0, 0)
-                rospy.sleep(1)
+                rospy.sleep(4.5)
             else:
                 drive(c, 3)
         elif mission == 5:
             if limit == 5:
-                turn_left()
+                print('main left')
+                #turn_left()
             elif limit == 6:
-                turn_right()
+                print('main right')
+                #turn_right()
         elif mission == 6:
-            if not scan_front(45, 135, 0.2):
+            if not scan_front(45, 135, 0.3):
                 drive(c, 3)
             else: # wall detect
                 print('--------------------------------END')
                 drive(0, 0)
-                rospy.sleep(1)
+                rospy.sleep(100)
         rate.sleep()
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
